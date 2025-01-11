@@ -8,6 +8,7 @@ struct AnimData
 	int frame;
 	float updateTime;
 	float runTime;
+	float testTest;
 };
 
 
