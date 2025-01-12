@@ -35,105 +35,88 @@ int main ()
 	const int GRAVITY = 1'000;
 	bool has_jumped = true;
 
-
 	//Nebula Hazard
 	Texture2D nebula = LoadTexture("textures/12_nebula_spritesheet.png");
-	AnimData nebData{ 
-		{0.0, 0.0, nebula.width / 8, nebula.height / 8}, // Rect
-		{SCREENWIDTH, SCREENHEIGHT - nebData.rect.height}, //Postion
-		0, // Animation Frame
-		1.0/12.0, // Update Time
-		0 // Run Time
-		};
-	AnimData neb2Data{ 
-		{0.0, 0.0, nebula.width / 8, nebula.height / 8}, // Rect
-		{SCREENWIDTH + 300, SCREENHEIGHT - nebData.rect.height}, //Postion
-		0, // Animation Frame
-		1.0/12.0, // Update Time
-		0 // Run Time
-		};
 
-	int nebulaMoveSpeed = -200;
-
-	while (!WindowShouldClose()) 
+	const int SIZEOFNEBULEA{6};	
+	AnimData nebulea[SIZEOFNEBULEA];
+	for (int i = 0; i < SIZEOFNEBULEA; i++)
 	{
-		float dT = GetFrameTime();
-		scarfyData.runTime += dT;
-		nebData.runTime += dT;
-		neb2Data.runTime += dT;
-		BeginDrawing();
-		ClearBackground(WHITE);
+		nebulea[i].rect.x = 0.0;
+		nebulea[i].rect.y = 0.0;
+		nebulea[i].rect.width = nebula.width / 8;
+		nebulea[i].rect.height = nebula.height / 8;
+		nebulea[i].pos.y = SCREENHEIGHT - nebula.height / 8;
+		nebulea[i].pos.x = SCREENWIDTH + i * 300;
+		nebulea[i].frame = 0;
+		nebulea[i].runTime = 0.0;
+		nebulea[i].updateTime = 1.0 / 18.0;
+	}
 
-		//Animate Scarfy
-		scarfyData.rect.x = scarfyData.frame * scarfyData.rect.width;
-		if (scarfyData.runTime >= scarfyData.updateTime && !has_jumped)
-		{
-			scarfyData.frame++;
-			scarfyData.runTime = 0;
-		}
-		if (scarfyData.frame > 5)
-		{
-			scarfyData.frame = 0;
-		}
-		DrawTextureRec(scarfy, scarfyData.rect, scarfyData.pos, WHITE);
+	int nebulaMoveSpeed = -250;
 
-		//Nebula stuff
-		nebData.pos.x += nebulaMoveSpeed * dT;
-		if (nebData.pos.x + nebData.rect.width < 0)
-		{
-			nebData.pos.x = SCREENWIDTH;
-		}
-		nebData.rect.x = nebData.frame * nebData.rect.width;
-		if (nebData.runTime >= nebData.updateTime)
-		{
-			nebData.frame ++;
-			nebData.runTime = 0;
-		}
-		if (nebData.frame > 7)
-		{
-			nebData.frame = 0;
-		}
-		DrawTextureRec(nebula, nebData.rect, nebData.pos, WHITE);
+	while(!WindowShouldClose())
+	{
+	float dT = GetFrameTime();
+	scarfyData.runTime += dT;
+	for(int i = 0; i < SIZEOFNEBULEA; i++)
+	{
+		nebulea[i].runTime += dT;
+	}
+	BeginDrawing();
+	ClearBackground(WHITE);
 
-		neb2Data.runTime += dT;
-		neb2Data.pos.x += nebulaMoveSpeed * dT;
-		neb2Data.rect.x = neb2Data.frame * neb2Data.rect.width;
-		if (neb2Data.pos.x + neb2Data.rect.width < 0)
-		{
-			neb2Data.pos.x = SCREENWIDTH;
-		}
-		if (neb2Data.runTime >= neb2Data.updateTime)
-		{
-			neb2Data.frame ++;
-			neb2Data.runTime = 0;
-		}
-		if (neb2Data.frame > 7)
-		{
-			neb2Data.frame = 0;
-		}
-		DrawTextureRec(nebula, neb2Data.rect, neb2Data.pos, WHITE);
+	//Animate Scarfy
+	scarfyData.rect.x = scarfyData.frame * scarfyData.rect.width;
+	if (scarfyData.runTime >= scarfyData.updateTime && !has_jumped)
+	{
+		scarfyData.frame++;
+		scarfyData.runTime = 0;
+	}
+	if (scarfyData.frame > 5)
+	{
+		scarfyData.frame = 0;
+	}
+	DrawTextureRec(scarfy, scarfyData.rect, scarfyData.pos, WHITE);
 
-		//Ground check and if not on ground apply gravity progressively to velocity	
-		if(scarfyData.pos.y >= SCREENHEIGHT - scarfyData.rect.height)
+	//Nebula stuff
+	for (int i = 0; i < SIZEOFNEBULEA; i++)
+	{
+		nebulea[i].pos.x += nebulaMoveSpeed * dT;
+		nebulea[i].rect.x = nebulea[i].frame * nebulea[i].rect.width;
+		if (nebulea[i].runTime >= nebulea[i].updateTime)
 		{
-			has_jumped = false;
-			y_velocity = 0;
+			nebulea[i].frame ++;
+			nebulea[i].runTime = 0;
 		}
-		else
+		if (nebulea[i].frame > 7)
 		{
-			y_velocity += GRAVITY * dT;
-		}		
+			nebulea[i].frame = 0;
+		}
+		DrawTextureRec(nebula, nebulea[i].rect, nebulea[i].pos, WHITE);
+	}
 
-		//Jump impulse
-		if(IsKeyPressed(KEY_SPACE) && !has_jumped)
-		{
-			y_velocity = jump_velocity;
-			has_jumped = true;
-		} 
-		
-		scarfyData.pos.y += y_velocity * dT;
+	//Ground check and if not on ground apply gravity progressively to velocity	
+	if(scarfyData.pos.y >= SCREENHEIGHT - scarfyData.rect.height)
+	{
+		has_jumped = false;
+		y_velocity = 0;
+	}
+	else
+	{
+		y_velocity += GRAVITY * dT;
+	}		
 
-		EndDrawing();
+	//Jump impulse
+	if(IsKeyPressed(KEY_SPACE) && !has_jumped)
+	{
+		y_velocity = jump_velocity;
+		has_jumped = true;
+	} 
+	
+	scarfyData.pos.y += y_velocity * dT;
+
+	EndDrawing();
 	}
 	UnloadTexture(scarfy);
 	UnloadTexture(nebula);
