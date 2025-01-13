@@ -10,15 +10,59 @@ struct AnimData
 	float runTime;
 };
 
+bool IsOnGround(AnimData data, int windowheight)
+{
+	return data.pos.y >= windowheight - data.rect.height;
+};
+
+AnimData UpdtAnimation(AnimData data, float deltaTime, int maxFrame)
+	{
+		data.rect.x = data.frame * data.rect.width;
+		if (data.runTime >= data.updateTime)
+		{
+			data.frame++;
+			data.runTime = 0;
+		}
+		if (data.frame > maxFrame)
+		{
+			data.frame = 0;
+		}
+		return data;
+	};
+
+void DrawXground(float xPos, Texture2D image)
+{
+	Vector2 bg1Pos{xPos, 0.0};
+	DrawTextureEx(image, bg1Pos, 0, 2, WHITE);
+	Vector2 bg2Pos{xPos + image.width * 2, 0.0};
+	DrawTextureEx(image, bg2Pos, 0, 2, WHITE);
+};
+
+float UpdtXGroundPos(float xPos, Texture2D image, int scrollamount, float delta)
+{
+	xPos -= 20 * delta;
+	if(xPos <= (image.width * 2) * -1)
+	{
+		xPos = 0.0;
+	}
+	return xPos;
+}
 
 int main () 
 {
 	//Initialize window
-	const float SCREENWIDTH = 640;
+	const float SCREENWIDTH = 500;
 	const float SCREENHEIGHT = 320;
 	InitWindow(SCREENWIDTH, SCREENHEIGHT, "Dasher");		
 	SetTargetFPS(60);
-
+	
+	//Backgrounds Textures
+	Texture2D background = LoadTexture("textures/far-buildings.png");
+	float bgX{};
+	Texture2D midground = LoadTexture("textures/back-buildings.png");
+	float mgX{};
+	Texture2D foreground = LoadTexture("textures/foreground.png");
+	float fgX{};
 
 	//Scarfy
 	Texture2D scarfy = LoadTexture("textures/scarfy.png");
@@ -66,38 +110,42 @@ int main ()
 	BeginDrawing();
 	ClearBackground(WHITE);
 
-	//Animate Scarfy
-	scarfyData.rect.x = scarfyData.frame * scarfyData.rect.width;
-	if (scarfyData.runTime >= scarfyData.updateTime && !has_jumped)
+	//Draw and update backgroud
+	float bgX{};
+	bgX = (bgX, background, 90, dT);
+	DrawXground(bgX, background);
+
+	mgX -= 30 * dT;
+	if(mgX <= (midground.width * 2) * -1)
 	{
-		scarfyData.frame++;
-		scarfyData.runTime = 0;
+		bgX = 0.0;
 	}
-	if (scarfyData.frame > 5)
+	DrawXground(mgX, midground);
+	
+	fgX -= 60 * dT;
+	if(fgX <= (foreground.width * 2) * -1)
 	{
-		scarfyData.frame = 0;
+		fgX = 0.0;
+	}
+	DrawXground(fgX, foreground);
+
+
+	//Animations
+	if(!has_jumped)
+	{ 
+		scarfyData = UpdtAnimation(scarfyData, dT, 5); // Update Scarfy
 	}
 	DrawTextureRec(scarfy, scarfyData.rect, scarfyData.pos, WHITE);
 
-	//Nebula stuff
-	for (int i = 0; i < SIZEOFNEBULEA; i++)
+	for (int i = 0; i < SIZEOFNEBULEA; i++) //Update and move nebulea
 	{
 		nebulea[i].pos.x += nebulaMoveSpeed * dT;
-		nebulea[i].rect.x = nebulea[i].frame * nebulea[i].rect.width;
-		if (nebulea[i].runTime >= nebulea[i].updateTime)
-		{
-			nebulea[i].frame ++;
-			nebulea[i].runTime = 0;
-		}
-		if (nebulea[i].frame > 7)
-		{
-			nebulea[i].frame = 0;
-		}
+		nebulea[i] = UpdtAnimation(nebulea[i], dT, 7);
 		DrawTextureRec(nebula, nebulea[i].rect, nebulea[i].pos, WHITE);
 	}
 
 	//Ground check and if not on ground apply gravity progressively to velocity	
-	if(scarfyData.pos.y >= SCREENHEIGHT - scarfyData.rect.height)
+	if(IsOnGround(scarfyData, SCREENHEIGHT))
 	{
 		has_jumped = false;
 		y_velocity = 0;
@@ -118,8 +166,12 @@ int main ()
 
 	EndDrawing();
 	}
+
 	UnloadTexture(scarfy);
 	UnloadTexture(nebula);
+	UnloadTexture(background);
+	UnloadTexture(midground);
+	UnloadTexture(foreground);
 	CloseWindow();
 	return 0;
 	
