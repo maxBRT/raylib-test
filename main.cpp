@@ -40,10 +40,11 @@ void DrawXground(float xPos, Texture2D image)
 
 float UpdtXGroundPos(float xPos, Texture2D image, int scrollamount, float delta)
 {
-	xPos -= 20 * delta;
-	if(xPos <= (image.width * 2) * -1)
+	xPos -= scrollamount * delta;
+	if(xPos <= -(image.width * 2))
 	{
 		xPos = 0.0;
+		 
 	}
 	return xPos;
 }
@@ -78,6 +79,7 @@ int main ()
 	int jump_velocity = -580; 
 	const int GRAVITY = 1'000;
 	bool has_jumped = true;
+	bool collision{};
 
 	//Nebula Hazard
 	Texture2D nebula = LoadTexture("textures/12_nebula_spritesheet.png");
@@ -99,36 +101,29 @@ int main ()
 
 	int nebulaMoveSpeed = -250;
 
+	float finishLine{nebulea[SIZEOFNEBULEA - 1].pos.x};
+
 	while(!WindowShouldClose())
 	{
+
 	float dT = GetFrameTime();
+	
 	scarfyData.runTime += dT;
 	for(int i = 0; i < SIZEOFNEBULEA; i++)
 	{
 		nebulea[i].runTime += dT;
 	}
+
 	BeginDrawing();
 	ClearBackground(WHITE);
 
 	//Draw and update backgroud
-	float bgX{};
-	bgX = (bgX, background, 90, dT);
+	bgX = UpdtXGroundPos(bgX, background, 20, dT);
 	DrawXground(bgX, background);
-
-	mgX -= 30 * dT;
-	if(mgX <= (midground.width * 2) * -1)
-	{
-		bgX = 0.0;
-	}
+	mgX = UpdtXGroundPos(mgX, midground, 40, dT);
 	DrawXground(mgX, midground);
-	
-	fgX -= 60 * dT;
-	if(fgX <= (foreground.width * 2) * -1)
-	{
-		fgX = 0.0;
-	}
+	fgX = UpdtXGroundPos(fgX, foreground, 60, dT);
 	DrawXground(fgX, foreground);
-
 
 	//Animations
 	if(!has_jumped)
@@ -143,6 +138,29 @@ int main ()
 		nebulea[i] = UpdtAnimation(nebulea[i], dT, 7);
 		DrawTextureRec(nebula, nebulea[i].rect, nebulea[i].pos, WHITE);
 	}
+
+	for(AnimData nebula : nebulea)
+	{
+		float pad{20};
+		Rectangle nebRec{
+			nebula.pos.x + pad,
+			nebula.pos.y + pad,
+			nebula.rect.width - 2*pad,
+			nebula.rect.height - 2*pad
+		};
+
+		Rectangle scarfyRect{
+			scarfyData.pos.x,
+			scarfyData.pos.y,
+			scarfyData.rect.width - pad,
+			scarfyData.rect.height - pad,
+		};
+		if(CheckCollisionRecs(nebRec, scarfyRect))
+		{
+			collision = true;
+		}
+	}
+	
 
 	//Ground check and if not on ground apply gravity progressively to velocity	
 	if(IsOnGround(scarfyData, SCREENHEIGHT))
@@ -163,7 +181,11 @@ int main ()
 	} 
 	
 	scarfyData.pos.y += y_velocity * dT;
-
+	finishLine += nebulaMoveSpeed * dT;
+	if(finishLine <= scarfyData.pos.x)
+	{
+		std::cout << "Finish" << std::endl;
+	}
 	EndDrawing();
 	}
 
